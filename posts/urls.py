@@ -7,23 +7,23 @@ urlpatterns = [
     path('new/', views.new_post, name='new_post'),
     path('404/', views.page_not_found, name='404'),
     path('500/', views.server_error, name='500'),
-    path("follow/", views.follow_index, name="follow_index"),
+    path('follow/', views.follow_index, name='follow_index'),
     path(
-        "<str:username>/follow/",
+        '<str:username>/follow/',
         views.profile_follow,
-        name="profile_follow"
+        name='profile_follow'
     ),
     path(
-        "<str:username>/unfollow/",
+        '<str:username>/unfollow/',
         views.profile_unfollow,
-        name="profile_unfollow"
+        name='profile_unfollow'
     ),
     path('<str:username>/', views.profile, name='profile'),
     path('<str:username>/<int:post_id>/', views.post_view, name='post'),
     path(
-        "<str:username>/<int:post_id>/comment",
+        '<str:username>/<int:post_id>/comment/',
         views.add_comment,
-        name="add_comment"
+        name='add_comment'
     ),
     path(
         '<str:username>/<int:post_id>/edit/',
