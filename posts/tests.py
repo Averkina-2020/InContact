@@ -9,7 +9,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 
-from .models import Comment, Follow, Group, Post
+from .models import Follow, Post
 
 User = get_user_model()
 
@@ -31,9 +31,6 @@ class TestPost(TestCase):
         self.client_authorized.force_login(self.user_authorized)
         self.post = Post.objects.create(text='text', author=self.user)
         self.text = 'It seems like Im in the matrix'
-        self.group = Group.objects.create(
-            title='title', slug='slug', description='description'
-        )
 
     def test_profile(self):
         cache.clear()
@@ -52,7 +49,7 @@ class TestPost(TestCase):
         Post.objects.filter(author=self.user).delete()
         response = self.client.post(
             reverse('new_post'),
-            {'text': self.text, 'group': self.group.id},
+            {'text': self.text},
             follow=True
         )
         self.assertEqual(response.status_code, 200)
@@ -62,7 +59,7 @@ class TestPost(TestCase):
     def test_new_post_creation_authorized(self):
         response = self.client_authorized.post(
             reverse('new_post'),
-            {'text': self.text, 'group': self.group.id},
+            {'text': self.text},
             follow=True
         )
         self.assertEqual(response.status_code, 200)
@@ -96,7 +93,7 @@ class TestPost(TestCase):
         cache.clear()
         response = self.client_authorized.post(
             reverse('new_post'),
-            {'text': self.text, 'group': self.group.id},
+            {'text': self.text},
             follow=True
         )
         response_key = response.context['page'].object_list[0].pk
@@ -107,7 +104,7 @@ class TestPost(TestCase):
         cache.clear()
         response = self.client_authorized.post(
             reverse('new_post'),
-            {'text': self.text, 'group': self.group.id},
+            {'text': self.text},
             follow=True
         )
         response2 = self.client_authorized.post(
@@ -137,15 +134,9 @@ class TestImage(TestCase):
             email='goodman.m@n.com',
             password='54321'
         )
-        self.group = Group.objects.create(
-            title='group_title',
-            slug='group_slug',
-            description='group_description'
-        )
         self.post = Post.objects.create(
             text='text',
-            author=self.user_authorized,
-            group=self.group)
+            author=self.user_authorized)
         self.client_authorized.force_login(self.user_authorized)
 
     def test_image_contains(self):
@@ -164,7 +155,6 @@ class TestImage(TestCase):
                 {
                     'text': 'adding the image',
                     'image': img,
-                    'group': self.group.id,
                 }
             )
         pages = (
@@ -180,7 +170,6 @@ class TestImage(TestCase):
                     'post_id': self.post.id
                 }
             ),
-            reverse('group', kwargs={'slug': self.group.slug}),
             )
         for page in pages:
             page_response = self.client_authorized.get(page)
@@ -202,7 +191,6 @@ class TestImage(TestCase):
                 {
                     'text': 'adding the image',
                     'image': txt,
-                    'group': self.group.id,
                 }
             )
         pages = (
@@ -216,7 +204,6 @@ class TestImage(TestCase):
                 'post_id': self.post.id
             }
             ),
-            reverse('group', kwargs={'slug': self.group.slug}),
             )
         for page in pages:
             page_response = self.client_authorized.get(page)
@@ -243,15 +230,9 @@ class TestFollow(TestCase):
             email='user1@user.com',
             password='13579'
         )
-        self.group = Group.objects.create(
-            title='group_title',
-            slug='group_slug',
-            description='group_description'
-        )
         self.post = Post.objects.create(
             text='text',
-            author=self.user1,
-            group=self.group)
+            author=self.user1)
         self.client1.force_login(self.user1)
         self.client2.force_login(self.user2)
         self.client3.force_login(self.user3)
@@ -302,7 +283,7 @@ class TestFollow(TestCase):
         )
         response = self.client2.post(
             reverse('new_post'),
-            {'text': 'post for followers', 'group': self.group.id},
+            {'text': 'post for followers'},
             follow=True
         )
         response_key = response.context['page'].object_list[0].pk
@@ -313,95 +294,3 @@ class TestFollow(TestCase):
                         page_response.context['page'].object_list[0].pk)
         page_response2 = self.client3.get(page)
         self.assertEqual(len(page_response2.context['page'].object_list), 0)
-
-
-class TestComments(TestCase):
-    def setUp(self):
-        self.client1 = Client()
-        self.client2 = Client()
-        self.user1 = User.objects.create_user(
-            username='user1',
-            email='user1@user.com',
-            password='12345'
-        )
-        self.user2 = User.objects.create_user(
-            username='user2',
-            email='user2@user.com',
-            password='54321'
-        )
-        self.group = Group.objects.create(
-            title='group_title',
-            slug='group_slug',
-            description='group_description'
-        )
-        self.post = Post.objects.create(
-            text='text',
-            author=self.user1,
-            group=self.group)
-        self.client1.force_login(self.user1)
-        self.client2.force_login(self.user2)
-
-    def test_comment_authorized(self):
-        response = self.client1.post(
-            reverse('new_post'),
-            {'text': 'text', 'group': self.group.id},
-            follow=True
-        )
-        self.client2.post(
-            reverse(
-                'add_comment',
-                kwargs={
-                    'username': self.user1.username,
-                    'post_id': response.context['page'].object_list[0].pk
-                }
-            ),
-            {
-                'text': 'adding the comment',
-            }
-        )
-        page_response = self.client2.get(
-            reverse(
-                'post',
-                kwargs={
-                    'username': self.user1.username,
-                    'post_id': response.context['page'].object_list[0].pk
-                }
-            )
-        )
-        self.assertContains(page_response, 'adding the comment')
-
-    def test_comment_unauthorized(self):
-        cache.clear()
-        Post.objects.filter(author=self.user1).delete()
-        self.client2.logout()
-        response = self.client1.post(
-            reverse('new_post'),
-            {'text': 'text', 'group': self.group.id},
-            follow=True
-        )
-        self.client2.post(
-            reverse(
-                'add_comment',
-                kwargs={
-                    'username': self.user1.username,
-                    'post_id': response.context['page'].object_list[0].pk
-                }
-            ),
-            {
-                'text': 'adding the comment',
-            }
-        )
-        page_response = self.client2.get(
-            reverse(
-                'post',
-                kwargs={
-                    'username': self.user1.username,
-                    'post_id': response.context['page'].object_list[0].pk
-                }
-            )
-        )
-        self.assertNotContains(page_response, 'adding the comment')
-        counter = Comment.objects.filter(
-            post=response.context['page'].object_list[0].pk
-        ).filter(author=self.user2).count()
-        self.assertEqual(counter, 0)

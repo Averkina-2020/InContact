@@ -18,13 +18,13 @@ def get_field_context(context, field_type):
 class TestPostView:
 
     @pytest.mark.django_db(transaction=True)
-    def test_post_view_get(self, client, post_with_group):
+    def test_post_view_get(self, client, post):
         try:
-            response = client.get(f'/{post_with_group.author.username}/{post_with_group.id}')
+            response = client.get(f'/{post.author.username}/{post.id}')
         except Exception as e:
             assert False, f'''Страница `/<username>/<post_id>/` работает неправильно. Ошибка: `{e}`'''
         if response.status_code in (301, 302):
-            response = client.get(f'/{post_with_group.author.username}/{post_with_group.id}/')
+            response = client.get(f'/{post.author.username}/{post.id}/')
         assert response.status_code != 404, \
             'Страница `/<username>/<post_id>/` не найдена, проверьте этот адрес в *urls.py*'
 
@@ -36,36 +36,17 @@ class TestPostView:
         assert post_context is not None, \
             'Проверьте, что передали статью в контекст страницы `/<username>/<post_id>/` типа `Post`'
 
-        try:
-            from posts.forms import CommentForm
-        except ImportError:
-            assert False, 'Не найдена форма CommentForm в posts.form'
-
-        comment_form_context = get_field_context(response.context, CommentForm)
-        assert comment_form_context is not None, \
-            'Проверьте, что передали форму комментария в контекст страницы `/<username>/<post_id>/` типа `CommentForm`'
-        assert len(comment_form_context.fields) == 1, \
-            'Проверьте, что форма комментария в контекстке страницы `/<username>/<post_id>/` состоит из одного поля'
-        assert 'text' in comment_form_context.fields, \
-            'Проверьте, что форма комментария в контекстке страницы `/<username>/<post_id>/` содержится поле `text`'
-        assert type(comment_form_context.fields['text']) == forms.fields.CharField, \
-            'Проверьте, что форма комментария в контекстке страницы `/<username>/<post_id>/` содержится поле `text` типа `CharField`'
-
-        comment_context = get_field_context(response.context, QuerySet)
-        assert comment_context is not None, \
-            'Проверьте, что передали список комментариев в контекст страницы `/<username>/<post_id>/` типа `QuerySet`'
-
 
 class TestPostEditView:
 
     @pytest.mark.django_db(transaction=True)
-    def test_post_edit_view_get(self, client, post_with_group):
+    def test_post_edit_view_get(self, client, post):
         try:
-            response = client.get(f'/{post_with_group.author.username}/{post_with_group.id}/edit')
+            response = client.get(f'/{post.author.username}/{post.id}/edit')
         except Exception as e:
             assert False, f'''Страница `/<username>/<post_id>/edit/` работает неправильно. Ошибка: `{e}`'''
-        if response.status_code in (301, 302) and not response.url.startswith(f'/{post_with_group.author.username}/{post_with_group.id}'):
-            response = client.get(f'/{post_with_group.author.username}/{post_with_group.id}/edit/')
+        if response.status_code in (301, 302) and not response.url.startswith(f'/{post.author.username}/{post.id}'):
+            response = client.get(f'/{post.author.username}/{post.id}/edit/')
         assert response.status_code != 404, \
             'Страница `/<username>/<post_id>/edit/` не найдена, проверьте этот адрес в *urls.py*'
 
@@ -73,13 +54,13 @@ class TestPostEditView:
             'Проверьте, что вы переадресуете пользователя со страницы `/<username>/<post_id>/edit/` на страницу поста, если он не автор'
 
     @pytest.mark.django_db(transaction=True)
-    def test_post_edit_view_author_get(self, user_client, post_with_group):
+    def test_post_edit_view_author_get(self, user_client, post):
         try:
-            response = user_client.get(f'/{post_with_group.author.username}/{post_with_group.id}/edit')
+            response = user_client.get(f'/{post.author.username}/{post.id}/edit')
         except Exception as e:
             assert False, f'''Страница `/<username>/<post_id>/edit/` работает неправильно. Ошибка: `{e}`'''
         if response.status_code in (301, 302):
-            response = user_client.get(f'/{post_with_group.author.username}/{post_with_group.id}/edit/')
+            response = user_client.get(f'/{post.author.username}/{post.id}/edit/')
         assert response.status_code != 404, \
             'Страница `/<username>/<post_id>/edit/` не найдена, проверьте этот адрес в *urls.py*'
 
@@ -91,19 +72,11 @@ class TestPostEditView:
             'Проверьте, что передали форму `form` в контекст страницы `/<username>/<post_id>/edit/`'
         assert len(response.context['form'].fields) == 3, \
             'Проверьте, что в форме `form` на страницу `/<username>/<post_id>/edit/` 3 поля'
-        assert 'group' in response.context['form'].fields, \
-            'Проверьте, что в форме `form` на странице `/<username>/<post_id>/edit/` есть поле `group`'
-        assert type(response.context['form'].fields['group']) == forms.models.ModelChoiceField, \
-            'Проверьте, что в форме `form` на странице `/<username>/<post_id>/edit/` поле `group` типа `ModelChoiceField`'
-        assert not response.context['form'].fields['group'].required, \
-            'Проверьте, что в форме `form` на странице `/<username>/<post_id>/edit/` поле `group` не обязательно'
 
         assert 'text' in response.context['form'].fields, \
             'Проверьте, что в форме `form` на странице `/<username>/<post_id>/edit/` есть поле `text`'
         assert type(response.context['form'].fields['text']) == forms.fields.CharField, \
             'Проверьте, что в форме `form` на странице `/<username>/<post_id>/edit/` поле `text` типа `CharField`'
-        assert response.context['form'].fields['text'].required, \
-            'Проверьте, что в форме `form` на странице `/<username>/<post_id>/edit/` поле `group` обязательно'
 
         assert 'image' in response.context['form'].fields, \
             'Проверьте, что в форме `form` на странице `/<username>/<post_id>/edit/` есть поле `image`'
@@ -119,21 +92,21 @@ class TestPostEditView:
         return File(file_obj, name=name)
 
     @pytest.mark.django_db(transaction=True)
-    def test_post_edit_view_author_post(self, user_client, post_with_group):
+    def test_post_edit_view_author_post(self, user_client, post):
         text = 'Проверка изменения поста!'
         try:
-            response = user_client.get(f'/{post_with_group.author.username}/{post_with_group.id}/edit')
+            response = user_client.get(f'/{post.author.username}/{post.id}/edit')
         except Exception as e:
             assert False, f'''Страница `/<username>/<post_id>/edit/` работает неправильно. Ошибка: `{e}`'''
-        url = f'/{post_with_group.author.username}/{post_with_group.id}/edit/' if response.status_code in (301, 302) else f'/{post_with_group.author.username}/{post_with_group.id}/edit'
+        url = f'/{post.author.username}/{post.id}/edit/' if response.status_code in (301, 302) else f'/{post.author.username}/{post.id}/edit'
 
         image = self.get_image_file('image2.png')
-        response = user_client.post(url, data={'text': text, 'group': post_with_group.group_id, 'image': image})
+        response = user_client.post(url, data={'text': text, 'image': image})
 
         assert response.status_code in (301, 302), \
             'Проверьте, что со страницы `/<username>/<post_id>/edit/` после создания поста перенаправляете на страницу поста'
-        post = Post.objects.filter(author=post_with_group.author, text=text, group=post_with_group.group).first()
+        post = Post.objects.filter(author=post.author, text=text).first()
         assert post is not None, \
             'Проверьте, что вы изминили пост при отправки формы на странице `/<username>/<post_id>/edit/`'
-        assert response.url.startswith(f'/{post_with_group.author.username}/{post_with_group.id}'),\
+        assert response.url.startswith(f'/{post.author.username}/{post.id}'),\
             'Проверьте, что перенаправляете на страницу поста `/<username>/<post_id>/`'
