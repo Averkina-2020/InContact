@@ -1,9 +1,9 @@
 <h1>Social media</h1>
 
-Установка:
-git clone https://github.com/Averkina-2020/InContact
-python -m venv venv
-source venv/Scripts/activate
-pip install -r requirements.txt
-python manage.py makemigrations
-python manage.py migrate 
+<h3>Установка:</h3>
+git clone https://github.com/Averkina-2020/InContact </br>
+python -m venv venv </br>
+source venv/Scripts/activate </br>
+pip install -r requirements.txt </br>
+python manage.py makemigrations </br>
+python manage.py migrate </br>
