@@ -1,4 +1,4 @@
-Social media
+<h1>Social media</h1>
 
 Установка:
 git clone https://github.com/Averkina-2020/InContact
