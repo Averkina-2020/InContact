@@ -16,10 +16,36 @@
                                     <a href="{% url 'profile' man.applicant.username %}">
                                         <strong class="d-block text-gray-dark">@{{ man.applicant.username }}</strong></a>
                                         {{ man.applicant.get_full_name }}
-                                {% else %}
-                                    <a href="{% url 'profile' man.applicant.username %}">
+                                    <div class="box">
+                                        <a class="btn btn-lg btn-primary" 
+                                            href="{% url 'delete_outgoing_application' man.applicant.username %}" role="button">
+                                            Отменить заявку в друзья
+                                        </a>
+                                    </div>
+                                {% elif page_type == "incoming" %}
+                                    <a href="{% url 'profile' man.user.username %}">
                                         <strong class="d-block text-gray-dark">@{{ man.user.username }}</strong></a>
                                         {{ man.user.get_full_name }}
+                                    <div class="box">
+                                        <a class="btn btn-lg btn-primary"
+                                        href="{% url 'delete_incoming_application' man.user.username %}" role="button">
+                                            Отклонить заявку в друзья
+                                        </a>
+                                        <a class="btn btn-lg btn-primary" 
+                                            href="{% url 'friendship_offer' man.user.username %}" role="button">
+                                            Добавить в друзья
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <a href="{% url 'profile' man.friend.username %}">
+                                        <strong class="d-block text-gray-dark">@{{ man.friend.username }}</strong></a>
+                                        {{ man.friend.get_full_name }}
+                                    <div class="box">
+                                        <a class="btn btn-lg btn-primary"
+                                            href="{% url 'delete_friend' man.friend.username %}" role="button">
+                                            Удалить из друзей
+                                        </a>
+                                    </div>
                                 {% endif %}
                             </p>
                         </div>

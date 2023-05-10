@@ -5,7 +5,7 @@ from django.views.decorators.cache import cache_page
 
 from .forms import PostForm
 from .models import Follow, Post, User
-from friends.models import FriendshipApplication
+from friends.models import FriendshipApplication, Friendship
 
 
 @cache_page(20, key_prefix='index_page')
@@ -32,7 +32,35 @@ def new_post(request):
         {'form': form, 'flag': False}
     )
 
+@login_required
+def get_status(request, username):
+    applicant = get_object_or_404(User, username=username)
+    incoming_check = (
+        FriendshipApplication.objects.filter(
+            user=request.user
+        ).filter(applicant=applicant).exists()
+    )
+    if incoming_check:
+        return 'исходящая заявка от вас'
+    outgoing_check = (
+        FriendshipApplication.objects.filter(
+            user=applicant
+        ).filter(applicant=request.user).exists()
+    )
+    if outgoing_check:
+        return 'входящая заявка от пользователя'
+    friendship_check = (
+        Friendship.objects.filter(
+            user=request.user
+        ).filter(friend=applicant)
+    )
+    if friendship_check:
+        return 'друг'
+    else:
+        return 'отсутствует'
 
+
+@login_required
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     post_list = author.posts.all()
@@ -51,17 +79,12 @@ def profile(request, username):
                 user=request.user
             ).filter(applicant=author).exists()
         )
-        # friend = (
-        #     Friendship.objects.filter(
-        #         user=request.user
-        #     ).filter(user=author).exists()
-        # )
-    # if not request.user.is_anonymous or request.user.is_authenticated:
-    #     incoming = (
-    #         FriendshipApplication.objects.filter(
-    #             user=request.user
-    #         ).filter(applicant=author).exists()
-    #     )
+        friend = (
+            Friendship.objects.filter(
+                user=request.user
+            ).filter(user=author).exists()
+        )
+    status = get_status(request, username)
     return render(
         request,
         'profile.html',
@@ -71,7 +94,8 @@ def profile(request, username):
             'paginator': paginator,
             'following': following,
             'incoming': incoming,
-            # 'friend': friend,
+            'friend': friend,
+            'status': status,
         }
     )
 
@@ -131,19 +155,3 @@ def page_not_found(request, exception):
 
 def server_error(request):
     return render(request, 'misc/500.html', status=500)
-
-
-@login_required
-def profile_follow(request, username):
-    author = get_object_or_404(User, username=username)
-    if author != request.user:
-        Follow.objects.get_or_create(user=request.user, author=author)
-    return redirect('profile', username=username)
-
-
-@login_required
-def profile_unfollow(request, username):
-    author = get_object_or_404(User, username=username)
-    if author != request.user:
-        Follow.objects.filter(user=request.user).filter(author=author).delete()
-    return redirect('profile', username=username)

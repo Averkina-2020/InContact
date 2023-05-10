@@ -18,9 +18,9 @@ class FriendshipApplication(models.Model):
 class Friendship(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE,
-        related_name='outgoing_friendd'
+        related_name='outgoing_friend'
     )
     friend = models.ForeignKey(
         User, on_delete=models.CASCADE,
-        related_name='incoming_friendd'
+        related_name='incoming_friend'
     )
