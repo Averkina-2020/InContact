@@ -17,22 +17,50 @@
                     </li>
                     <li class="list-group-item">
                             <div class="h6 text-muted">
-                                Записей: {{ author.posts.count }}
+                                <a href="{% url 'profile' author.username %}" class="h6 text-muted">Записей</a>: {{ author.posts.count }} <br />
                             </div>
                     </li>
                     <li class="list-group-item">
-                        {% if following %}
-                        <a class="btn btn-lg btn-light" 
+                        <div class="h6 text-muted">
+                            <a href="{% url 'outgoing_friends' author.username %}" class="h6 text-muted">Исходящие заявки</a>: {{ author.outgoing.count }} <br />
+                            <a href="{% url 'incoming_friends' author.username %}" class="h6 text-muted">Входящие заявки</a>: {{ author.incoming.count }} <br />
+                        </div>
+                    </li>
+                    <li class="list-group-item">
+                        <div class="h6 text-muted">
+                            <a href="/about-author/" class="h6 text-muted">Друзья</a>: {{ author.friend.count }} <br />
+                        </div>
+                    </li>
+                    {% if author.username != request.user.username %}
+                        <li class="list-group-item">
+                            {% if following %}
+                            <a class="btn btn-lg btn-light" 
                                 href="{% url 'profile_unfollow' author.username %}" role="button"> 
                                 Отписаться 
-                        </a> 
-                        {% else %}
-                        <a class="btn btn-lg btn-primary" 
+                            </a> 
+                            {% else %}
+                            <a class="btn btn-lg btn-primary" 
                                 href="{% url 'profile_follow' author.username %}" role="button">
-                        Подписаться 
-                        </a>
-                        {% endif %}
-                    </li>
+                                Подписаться 
+                            </a>
+                            {% endif %}
+                        </li>
+                    {% endif %}
+                    {% if author.username != request.user.username %}
+                        <li class="list-group-item">
+                            {% if incoming %}
+                            <a class="btn btn-lg btn-light"
+                                href="{% url 'delete_outgoing_application' author.username %}" role="button"> 
+                                Отменить заявку в друзья 
+                            </a>
+                            {% else %}
+                            <a class="btn btn-lg btn-primary" 
+                                href="{% url 'friendship_offer' author.username %}" role="button">
+                                Добавить в друзья
+                            </a>
+                            {% endif %}
+                        </li>
+                    {% endif %}
             </ul>
     </div>
 </div>

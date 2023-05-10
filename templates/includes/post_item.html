@@ -11,9 +11,6 @@
             </p>
             <div class="d-flex justify-content-between align-items-center">
                     <div class="btn-group ">
-                            {% if page != Null %}
-                            <a class="btn btn-sm text-muted" href="{% url 'post' author.username post.id %}" role="button">Добавить комментарий</a>
-                            {% endif %}
                             {% if author.username == request.user.username %}
                                 <a class="btn btn-sm text-muted" href="{% url 'post_edit' author.username post.id %}" role="button">Редактировать</a>
                             {% endif %}

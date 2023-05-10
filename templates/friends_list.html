@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Профиль пользователя{% endblock %}
+{% block header %}{% endblock %}
+{% block content %}
+{% load user_filters %}
+<main role="main" class="container">
+    <div class="row">
+        {% include "includes/author_card.html" %}
+            <div class="col-md-9">
+                <h1>{{page_name}}</h1>
+                {% for man in page %}
+                    <div class="card mb-3 mt-1 shadow-sm">
+                        <div class="card-body">
+                            <p class="card-text">
+                                {% if page_type == "outgoing" %}
+                                    <a href="{% url 'profile' man.applicant.username %}">
+                                        <strong class="d-block text-gray-dark">@{{ man.applicant.username }}</strong></a>
+                                        {{ man.applicant.get_full_name }}
+                                {% else %}
+                                    <a href="{% url 'profile' man.applicant.username %}">
+                                        <strong class="d-block text-gray-dark">@{{ man.user.username }}</strong></a>
+                                        {{ man.user.get_full_name }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                {% if page.has_other_pages %}
+                    {% include "includes/paginator.html" with items=page paginator=paginator %}
+                {% endif %}
+            </div>
+    </div>
+</main>
+{% endblock %}

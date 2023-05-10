@@ -5,6 +5,7 @@ from django.views.decorators.cache import cache_page
 
 from .forms import PostForm
 from .models import Follow, Post, User
+from friends.models import FriendshipApplication
 
 
 @cache_page(20, key_prefix='index_page')
@@ -45,6 +46,22 @@ def profile(request, username):
                 user=request.user
             ).filter(author=author).exists()
         )
+        incoming = (
+            FriendshipApplication.objects.filter(
+                user=request.user
+            ).filter(applicant=author).exists()
+        )
+        # friend = (
+        #     Friendship.objects.filter(
+        #         user=request.user
+        #     ).filter(user=author).exists()
+        # )
+    # if not request.user.is_anonymous or request.user.is_authenticated:
+    #     incoming = (
+    #         FriendshipApplication.objects.filter(
+    #             user=request.user
+    #         ).filter(applicant=author).exists()
+    #     )
     return render(
         request,
         'profile.html',
@@ -52,7 +69,9 @@ def profile(request, username):
             'author': author,
             'page': page,
             'paginator': paginator,
-            'following': following
+            'following': following,
+            'incoming': incoming,
+            # 'friend': friend,
         }
     )
 
@@ -112,22 +131,6 @@ def page_not_found(request, exception):
 
 def server_error(request):
     return render(request, 'misc/500.html', status=500)
-
-
-@login_required
-def follow_index(request):
-    current_user = get_object_or_404(User, username=request.user)
-    post_list = Post.objects.filter(
-        author__following__user=current_user
-    )
-    paginator = Paginator(post_list, 10)
-    page_number = request.GET.get('page')
-    page = paginator.get_page(page_number)
-    return render(
-        request,
-        'follow.html',
-        {'page': page, 'paginator': paginator}
-    )
 
 
 @login_required
